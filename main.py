@@ -4,6 +4,7 @@ import datetime as dt
 import pathlib
 import tqdm
 import stumpy
+import score
 
 # Path setting
 rootpath = pathlib.Path('../dataset')
@@ -36,14 +37,14 @@ else:
 
 # Anomaly score names
 names = [
-    'orig_p2p',
-    'diff_p2p',
-    'acc_p2p',
+    'orig_p2p', #
+    'diff_p2p', #
+    'acc_p2p', #
     'orig_p2p_inv',
     'diff_small',
     'diff_large',
     'diff_cross',
-    'acc_std',
+    'acc_std', #
     'acc_std_inv',
     'orig_mp_novelty',
     'orig_np_novelty',
