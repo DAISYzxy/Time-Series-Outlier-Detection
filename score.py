@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from stumpy import stump
 
+small_quantile = 0.1
 
 names = [
     'orig_p2p',
@@ -45,11 +46,38 @@ def acc_p2p(seq, w):
     return seq
 
 
+def diff_small(seq, w):
+    diff_abs = seq['diff'].abs()
+    cond = diff_abs <= diff_abs.quantile(small_quantile)
+    seq['diff_small'] = cond.rolling(w).mean().shift(-w)
+    return seq
+
+
+def diff_large(seq, w):
+    diff_abs = seq['diff'].abs()
+    cond = diff_abs > diff_abs.quantile(small_quantile)
+    seq['diff_large'] = cond.rolling(w).mean().shift(-w)
+    return seq
+
+
+def diff_large(seq, w):
+    diff_abs = seq['diff'].abs()
+    cond = diff_abs > diff_abs.quantile(small_quantile)
+    seq['diff_large'] = cond.rolling(w).mean().shift(-w)
+    return seq
+
+
+def diff_cross(seq, w):
+    cond = seq['diff'] * seq['diff'].shift(1) < 0
+    seq['diff_cross'] = cond.rolling(w).mean().shift(-w)
+
+
 def acc_std(seq, w):
     seq['acc_std'] = seq['acc'].rolling(w).std().shift(-w)
     return seq
 
-def mp_novelty(seq,w,split):
+
+def mp_novelty(seq, w, split):
     mp_train = stump(seq['orig'][:split], w)
     mp_join = stump(seq['orig'][split:], w, seq['orig'][:split], ignore_trivial=False)
 
@@ -62,7 +90,8 @@ def mp_novelty(seq,w,split):
 
     return seq
 
-def mp_outlier(seq,w):
+
+def mp_outlier(seq, w):
     mp_all = stump(seq['orig'], w)
 
     mpvalue = mp_all[:, 0].astype(float)
@@ -79,8 +108,10 @@ def run(X, w, split):
     seq = diff_p2p(seq, w)
     seq = acc_p2p(seq, w)
     seq = acc_std(seq, w)
-
-    seq = mp_novelty(seq,w,split)
+    seq = diff_small(seq, w)
+    seq = diff_large(seq, w)
+    seq = diff_cross(seq, w)
+    seq = mp_novelty(seq, w, split)
     seq = mp_outlier(seq, w)
 
     return
