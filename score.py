@@ -14,6 +14,8 @@ names = [
     'diff_small',
     'diff_large',
     'diff_cross',
+    'turkey_test_min',
+    'turkey_test_max',
     'acc_std',
     'acc_std_inv',
     'orig_mp_novelty',
@@ -59,6 +61,17 @@ def diff_large(seq, w):
     seq['diff_large'] = cond.rolling(w).mean().shift(-w)
     return seq
 
+def turkey_test_min(seq, w):
+    q1 = seq['diff'].rolling(w).quantile(0.25)
+    q3 = seq['diff'].rolling(w).quantile(0.75)
+    seq['turkey_test_min'] = ((q1 - min(seq['diff'])) / (q3 - q1)).shift(-w)
+    return seq
+
+def turkey_test_max(seq, w):
+    q1 = seq['diff'].rolling(w).quantile(0.25)
+    q3 = seq['diff'].rolling(w).quantile(0.75)
+    seq['turkey_test_max'] = ((max(seq['diff']) - q3) / (q3 - q1)).shift(-w)
+    return seq
 
 def diff_large(seq, w):
     diff_abs = seq['diff'].abs()
@@ -110,6 +123,8 @@ def run(X, w, split):
     seq = acc_std(seq, w)
     seq = diff_small(seq, w)
     seq = diff_large(seq, w)
+    seq = turkey_test_min(seq,w)
+    seq = turkey_test_max(seq, w)
     seq = diff_cross(seq, w)
     seq = mp_novelty(seq, w, split)
     seq = mp_outlier(seq, w)
