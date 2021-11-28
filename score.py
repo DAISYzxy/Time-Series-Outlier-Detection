@@ -64,13 +64,15 @@ def diff_large(seq, w):
 def turkey_test_min(seq, w):
     q1 = seq['diff'].rolling(w).quantile(0.25)
     q3 = seq['diff'].rolling(w).quantile(0.75)
-    seq['turkey_test_min'] = ((q1 - min(seq['diff'])) / (q3 - q1)).shift(-w)
+    min = seq['diff'].rolling(w).min()
+    seq['turkey_test_min'] = ((q1 - min) / (q3 - q1)).shift(-w)
     return seq
 
 def turkey_test_max(seq, w):
     q1 = seq['diff'].rolling(w).quantile(0.25)
     q3 = seq['diff'].rolling(w).quantile(0.75)
-    seq['turkey_test_max'] = ((max(seq['diff']) - q3) / (q3 - q1)).shift(-w)
+    max = seq['diff'].rolling(w).max()
+    seq['turkey_test_max'] = ((max - q3) / (q3 - q1)).shift(-w)
     return seq
 
 def diff_large(seq, w):
