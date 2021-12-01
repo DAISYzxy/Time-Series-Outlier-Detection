@@ -58,7 +58,6 @@ def diff_small(seq, w):
     seq['diff_small'] = cond.rolling(w).mean().shift(-w)
     return seq
 
-
 def diff_large(seq, w):
     diff_abs = seq['diff'].abs()
     cond = diff_abs > diff_abs.quantile(small_quantile)
@@ -144,4 +143,4 @@ def run(X, w, split):
     seq = mp_novelty(seq, w, split)
     seq = mp_outlier(seq, w)
 
-    return
+    return seq

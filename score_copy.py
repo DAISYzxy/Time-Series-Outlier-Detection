@@ -1,23 +1,25 @@
 # Anomaly score names
-from _typeshed import OpenTextModeWriting
+# from _typeshed import OpenTextModeWriting
 import numpy as np
 import pandas as pd
 from stumpy import stump
 
 small_quantile = 0.1
 
+# 'orig_p2p_inv','acc_std_inv',
+
 names = [
     'orig_p2p',
     'diff_p2p',
     'acc_p2p',
-    'orig_p2p_inv',
+
     'diff_small',
     'diff_large',
     'diff_cross',
     'turkey_test_min',
     'turkey_test_max',
     'acc_std',
-    'acc_std_inv',
+
     'orig_mp_novelty',
     'orig_np_novelty',
     'orig_mp_outlier',
@@ -31,14 +33,12 @@ def orig_p2p(seq, w):
     seq['orig_p2p'] = (rolling_max - rolling_min).shift(-w)
     return seq
 
-
 def diff_p2p(seq, w):
     seq['diff'] = seq['orig'].diff(1)
     rolling_max = seq['diff'].rolling(w).max()
     rolling_min = seq['diff'].rolling(w).min()
     seq['diff_p2p'] = (rolling_max - rolling_min).shift(-w)
     return seq
-
 
 def acc_p2p(seq, w):
     seq['acc'] = seq['diff'].diff(1)
@@ -47,13 +47,11 @@ def acc_p2p(seq, w):
     seq['acc_p2p'] = (rolling_max - rolling_min).shift(-w)
     return seq
 
-
 def diff_small(seq, w):
     diff_abs = seq['diff'].abs()
     cond = diff_abs <= diff_abs.quantile(small_quantile)
     seq['diff_small'] = cond.rolling(w).mean().shift(-w)
     return seq
-
 
 def diff_large(seq, w):
     diff_abs = seq['diff'].abs()
@@ -75,22 +73,20 @@ def turkey_test_max(seq, w):
     seq['turkey_test_max'] = ((max - q3) / (q3 - q1)).shift(-w)
     return seq
 
-def diff_large(seq, w):
-    diff_abs = seq['diff'].abs()
-    cond = diff_abs > diff_abs.quantile(small_quantile)
-    seq['diff_large'] = cond.rolling(w).mean().shift(-w)
-    return seq
-
+# def diff_large(seq, w):
+#     diff_abs = seq['diff'].abs()
+#     cond = diff_abs > diff_abs.quantile(small_quantile)
+#     seq['diff_large'] = cond.rolling(w).mean().shift(-w)
+#     return seq
 
 def diff_cross(seq, w):
     cond = seq['diff'] * seq['diff'].shift(1) < 0
     seq['diff_cross'] = cond.rolling(w).mean().shift(-w)
-
+    return seq
 
 def acc_std(seq, w):
     seq['acc_std'] = seq['acc'].rolling(w).std().shift(-w)
     return seq
-
 
 def mp_novelty(seq, w, split):
     mp_train = stump(seq['orig'][:split], w)
@@ -167,6 +163,7 @@ txt_dirpath = rootpath / 'phase2'  # Place the txt files in this directory
 # Evaluate anomaly score for each time series
 results = []
 for txt_filepath in sorted(txt_dirpath.iterdir()):
+    if ".DS_Store" in str(txt_filepath): continue
     # Load time series
     X = np.loadtxt(txt_filepath)
     number = txt_filepath.stem.split('_')[0]
@@ -225,17 +222,8 @@ for txt_filepath in sorted(txt_dirpath.iterdir()):
             results.append([number, w, name, rate, begin, end, index1, value1, index2, value2])
 
 # Display results
-results = pd.DataFrame(results,
-                       columns=['number', 'w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2', 'value2'])
-# results.to_csv('result.csv')
-# Make submission csv
-
-submission = results.loc[
-    results.groupby('number')['rate'].idxmax(), ['w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2',
-                                                 'value2']]
-submission.index = np.arange(len(submission)) + 86
-# submission.name = ['w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2', 'value2']
-submission.index.name = 'No.'
+results = pd.DataFrame(results, columns=['number', 'w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2', 'value2'])
+submission = results.loc[results.groupby('number')['rate'].idxmax(), ['number','w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2', 'value2']]
+submission.index.number = 'No.'
 submission.to_csv('result.csv')
-
 
