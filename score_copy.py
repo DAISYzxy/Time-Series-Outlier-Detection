@@ -12,14 +12,14 @@ names = [
     'orig_p2p',
     'diff_p2p',
     'acc_p2p',
-
+    'orig_p2p_inv',
     'diff_small',
     'diff_large',
     'diff_cross',
     'turkey_test_min',
     'turkey_test_max',
     'acc_std',
-
+    'acc_std_inv',
     'orig_mp_novelty',
     'orig_np_novelty',
     'orig_mp_outlier',
@@ -45,6 +45,11 @@ def acc_p2p(seq, w):
     rolling_max = seq['acc'].rolling(w).max()
     rolling_min = seq['acc'].rolling(w).min()
     seq['acc_p2p'] = (rolling_max - rolling_min).shift(-w)
+    return seq
+
+def orig_p2p_inv(seq, w):
+    numer = seq['orig_p2p'].mean()
+    seq['orig_p2p_inv'] = numer / seq['orig_p2p']
     return seq
 
 def diff_small(seq, w):
@@ -73,12 +78,6 @@ def turkey_test_max(seq, w):
     seq['turkey_test_max'] = ((max - q3) / (q3 - q1)).shift(-w)
     return seq
 
-# def diff_large(seq, w):
-#     diff_abs = seq['diff'].abs()
-#     cond = diff_abs > diff_abs.quantile(small_quantile)
-#     seq['diff_large'] = cond.rolling(w).mean().shift(-w)
-#     return seq
-
 def diff_cross(seq, w):
     cond = seq['diff'] * seq['diff'].shift(1) < 0
     seq['diff_cross'] = cond.rolling(w).mean().shift(-w)
@@ -86,6 +85,11 @@ def diff_cross(seq, w):
 
 def acc_std(seq, w):
     seq['acc_std'] = seq['acc'].rolling(w).std().shift(-w)
+    return seq
+
+def acc_std_inv(seq, w):
+    numer = seq['acc_std'].mean()
+    seq['acc_std_inv'] = numer / seq['acc_std']
     return seq
 
 def mp_novelty(seq, w, split):
@@ -120,7 +124,9 @@ def run(X, w, split):
     seq = orig_p2p(seq, w)
     seq = diff_p2p(seq, w)
     seq = acc_p2p(seq, w)
+    seq = orig_p2p_inv(seq, w)
     seq = acc_std(seq, w)
+    seq = acc_std_inv(seq, w)
     seq = diff_small(seq, w)
     seq = diff_large(seq, w)
     seq = turkey_test_min(seq,w)
