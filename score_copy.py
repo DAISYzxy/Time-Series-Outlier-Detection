@@ -101,7 +101,9 @@ def mp_novelty(seq, w, split):
 
     nomindex = mp_join[:, 1].astype(int)
     nomvalue = mp_train[:, 0][nomindex].astype(float)
-    seq.loc[split:split + len(mpvalue) - 1, 'orig_np_novelty'] = mpvalue / nomvalue  # norm mp
+
+    with np.errstate(all='ignore'):
+        seq.loc[split:split + len(mpvalue) - 1, 'orig_np_novelty'] = mpvalue / nomvalue  # norm mp
 
     return seq
 
@@ -114,7 +116,8 @@ def mp_outlier(seq, w):
 
     nomindex = mp_all[:, 1].astype(int)
     nomvalue = mp_all[:, 0][nomindex].astype(float)
-    seq.loc[0:len(mpvalue) - 1, 'orig_np_outlier'] = mpvalue / nomvalue  # norm mp
+    with np.errstate(all='ignore'):
+        seq.loc[0:len(mpvalue) - 1, 'orig_np_outlier'] = mpvalue / nomvalue  # norm mp
 
     return seq
 
