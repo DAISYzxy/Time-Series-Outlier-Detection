@@ -85,7 +85,6 @@ def diff_large(seq, w):
 def diff_cross(seq, w):
     cond = seq['diff'] * seq['diff'].shift(1) < 0
     seq['diff_cross'] = cond.rolling(w).mean().shift(-w)
-    return seq
 
 
 def acc_std(seq, w):
@@ -134,4 +133,109 @@ def run(X, w, split):
     seq = mp_novelty(seq, w, split)
     seq = mp_outlier(seq, w)
 
-    return
+
+    # Smooth and mask anomaly score
+    padding_length = 3
+    padding = w * padding_length
+    seq['mask'] = 0.0
+    seq.loc[seq.index[w:-w - padding], 'mask'] = 1.0
+    seq['mask'] = seq['mask'].rolling(padding, min_periods=1).sum() / padding
+    for name in names:
+        seq[f'{name}_score'] = seq[name].rolling(w).mean() * seq['mask']
+
+    return seq
+
+
+# Parameter setting
+min_window_size = 50
+max_window_size = 800
+growth_rate = 1.2
+train_length = 10
+
+# Determine window sizes
+size = int(np.log(max_window_size / min_window_size) / np.log(growth_rate)) + 1
+rates = np.full(size, growth_rate) ** np.arange(size)
+ws = (min_window_size * rates).astype(int)
+
+# Path setting
+import pathlib
+import tqdm
+
+rootpath = pathlib.Path('../dataset')
+txt_dirpath = rootpath / 'phase2'  # Place the txt files in this directory
+
+# Evaluate anomaly score for each time series
+results = []
+for txt_filepath in sorted(txt_dirpath.iterdir()):
+    # Load time series
+    X = np.loadtxt(txt_filepath)
+    number = txt_filepath.stem.split('_')[0]
+    split = int(txt_filepath.stem.split('_')[-1])
+    print(f'\n{txt_filepath.name} {split}/{len(X)}', flush=True)
+
+    # Evaluate anomaly score for each window size w
+    for w in tqdm.tqdm(ws):
+
+        # Skip long subsequence
+        if w * train_length > split:
+            continue
+
+        # Compute anomaly score
+        seq = run(X, w, split)
+
+        # Evaluate anomaly score
+        for name in names:
+
+            # Copy anomaly score
+            y = seq[f'{name}_score'].copy()
+
+            # Find local maxima
+            cond = (y == y.rolling(w, center=True, min_periods=1).max())
+            y.loc[~cond] = np.nan
+
+            # Find 1st peak
+            index1 = y.idxmax()
+            value1 = y.max()
+
+            # Skip if all score is NaN
+            if not np.isfinite(value1):
+                continue
+
+            # Skip if all score is not positive
+            if value1 <= 0.0:
+                continue
+
+            # Skip if train data has 1st peak
+            begin = index1 - w
+            end = index1 + w
+            if begin < split:
+                continue
+
+            # Find 2nd peak
+            y.iloc[begin:end] = np.nan
+            index2 = y.idxmax()
+            value2 = y.max()
+
+            # Skip if 2nd peak height is zero
+            if value2 == 0:
+                continue
+
+            # Evaluate rate of 1st peak height to 2nd peak height
+            rate = value1 / value2
+            results.append([number, w, name, rate, begin, end, index1, value1, index2, value2])
+
+# Display results
+results = pd.DataFrame(results,
+                       columns=['number', 'w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2', 'value2'])
+# results.to_csv('result.csv')
+# Make submission csv
+
+submission = results.loc[
+    results.groupby('number')['rate'].idxmax(), ['w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2',
+                                                 'value2']]
+submission.index = np.arange(len(submission)) + 86
+# submission.name = ['w', 'name', 'rate', 'begin', 'end', 'index1', 'value1', 'index2', 'value2']
+submission.index.name = 'No.'
+submission.to_csv('result.csv')
+
+
