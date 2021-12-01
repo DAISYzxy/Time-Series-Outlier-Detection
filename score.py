@@ -47,6 +47,10 @@ def acc_p2p(seq, w):
     seq['acc_p2p'] = (rolling_max - rolling_min).shift(-w)
     return seq
 
+def orig_p2p_inv(seq, w):
+    numer = seq['orig_p2p'].mean()
+    seq['orig_p2p_inv'] = numer / seq['orig_p2p']
+    return seq
 
 def diff_small(seq, w):
     diff_abs = seq['diff'].abs()
@@ -91,6 +95,10 @@ def acc_std(seq, w):
     seq['acc_std'] = seq['acc'].rolling(w).std().shift(-w)
     return seq
 
+def acc_std_inv(seq, w):
+    numer = seq['acc_std'].mean()
+    seq['acc_std_inv'] = numer / seq['acc_std']
+    return seq
 
 def mp_novelty(seq, w, split):
     mp_train = stump(seq['orig'][:split], w)
@@ -124,7 +132,9 @@ def run(X, w, split):
     seq = orig_p2p(seq, w)
     seq = diff_p2p(seq, w)
     seq = acc_p2p(seq, w)
+    seq = orig_p2p_inv(seq, w)
     seq = acc_std(seq, w)
+    seq = acc_std_inv(seq, w)
     seq = diff_small(seq, w)
     seq = diff_large(seq, w)
     seq = turkey_test_min(seq,w)
