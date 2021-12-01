@@ -101,6 +101,8 @@ def mp_outlier(seq, w):
     nomvalue = mp_all[:, 0][nomindex].astype(float)
     seq.loc[0:len(mpvalue) - 1, 'orig_np_outlier'] = mpvalue / nomvalue  # norm mp
 
+    return seq
+
 
 def run(X, w, split):
     seq = pd.DataFrame(X, columns=['orig'])
