@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 from stumpy import stump
 
-small_quantile = 0.1
-
 names = [
     'orig_p2p',  # Extreme Value Detection
     'diff_p2p',  # Extreme Differenced Value Detection
@@ -55,6 +53,7 @@ def orig_p2p_inv(seq, w):
 
 
 def diff_small(seq, w):
+    small_quantile = 0.1
     diff_abs = seq['diff'].abs()
     cond = diff_abs <= diff_abs.quantile(small_quantile)
     seq['diff_small'] = cond.rolling(w).mean().shift(-w)
@@ -62,6 +61,7 @@ def diff_small(seq, w):
 
 
 def diff_large(seq, w):
+    small_quantile = 0.1
     diff_abs = seq['diff'].abs()
     cond = diff_abs > diff_abs.quantile(small_quantile)
     seq['diff_large'] = cond.rolling(w).mean().shift(-w)
@@ -195,8 +195,7 @@ def save_result(result):
 import pathlib
 import tqdm
 
-rootpath = pathlib.Path('../dataset')
-txt_dirpath = rootpath / 'phase2'  # Place the txt files in this directory
+txt_dirpath = pathlib.Path('./dataset')
 
 # Init parameter
 min_window_size, max_window_size, growth_rate, train_length = init_param()
