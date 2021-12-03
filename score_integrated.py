@@ -1,5 +1,3 @@
-# Anomaly score names
-# from _typeshed import OpenTextModeWriting
 import numpy as np
 import pandas as pd
 from stumpy import stump
@@ -14,12 +12,12 @@ names = [
     'diff_cross',  # Auto-correlation Detection of Differenced Value
     'tukey_test_min',  # Outlier Detection Based on Tukey’s Test
     'tukey_test_max',  # Outlier Detection Based on Tukey’s Test
-    'acc_std',
-    'acc_std_inv',
-    'orig_mp_novelty',
-    'orig_np_novelty',
-    'orig_mp_outlier',
-    'orig_np_outlier',
+    'acc_std', # Extreme Standard Deviation Value
+    'acc_std_inv', # Inverse of Extreme Standard Deviation Value Detection
+    'orig_mp_novelty', # Outlier Detection Basd on AB-join Matrix Profile
+    'orig_np_novelty', # Outlier Detection Based on Self-join Matrix Profile
+    'orig_mp_outlier', # Outlier Detection Basd on Normalized AB-join Matrix Profile
+    'orig_np_outlier', # Outlier Detection Based on Normalized Self-join Matrix Profile
 ]
 
 
@@ -222,17 +220,16 @@ for txt_filepath in sorted(txt_dirpath.iterdir()):
         seq = run(X, w, split)
         seq = get_score(seq, w)
 
-        # Evaluate anomaly score
+        # Compute Confidence
         for name in names:
 
-            # Copy anomaly score
             y = seq[f'{name}_score'].copy()
 
             # Find local maxima
             cond = (y == y.rolling(w, center=True, min_periods=1).max())
             y.loc[~cond] = np.nan
 
-            # Find 1st peak
+            # Find top anormaly score
             index1 = y.idxmax()
             value1 = y.max()
 
@@ -244,22 +241,22 @@ for txt_filepath in sorted(txt_dirpath.iterdir()):
             if value1 <= 0.0:
                 continue
 
-            # Skip if train data has 1st peak
+            # Skip if top anormaly score find in train data
             begin = index1 - w
             end = index1 + w
             if begin < split:
                 continue
 
-            # Find 2nd peak
+            # Find second-highest anormaly score
             y.iloc[begin:end] = np.nan
             index2 = y.idxmax()
             value2 = y.max()
 
-            # Skip if 2nd peak height is zero
+            # Skip if second-highest anormaly score is zero
             if value2 == 0:
                 continue
 
-            # Evaluate rate of 1st peak height to 2nd peak height
+            # Compute the condifence
             rate = value1 / value2
             results.append([number, w, name, rate, begin, end, index1, value1, index2, value2])
 
