@@ -1,5 +1,3 @@
-# Anomaly score names
-# from _typeshed import OpenTextModeWriting
 import numpy as np
 import pandas as pd
 from stumpy import stump
@@ -16,12 +14,12 @@ names = [
     'diff_cross',  # Auto-correlation Detection of Differenced Value
     'tukey_test_min',  # Outlier Detection Based on Tukey’s Test
     'tukey_test_max',  # Outlier Detection Based on Tukey’s Test
-    'acc_std',
-    'acc_std_inv',
-    'orig_mp_novelty',
-    'orig_np_novelty',
-    'orig_mp_outlier',
-    'orig_np_outlier',
+    'acc_std', # Extreme Standard Deviation Value
+    'acc_std_inv', # Inverse of Extreme Standard Deviation Value Detection
+    'orig_mp_novelty', # Outlier Detection Basd on AB-join Matrix Profile
+    'orig_np_novelty', # Outlier Detection Based on Self-join Matrix Profile
+    'orig_mp_outlier', # Outlier Detection Basd on Normalized AB-join Matrix Profile
+    'orig_np_outlier', # Outlier Detection Based on Normalized Self-join Matrix Profile
 ]
 
 
